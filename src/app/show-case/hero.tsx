@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
@@ -16,7 +17,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const frameCount = 148;
+    const frameCount = 17; // Adjusted to likely number of frames
     const currentFrame = (index: number) =>
       `/frames/${String(index).padStart(2, "0")}.png`;
 
@@ -61,8 +62,6 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         images.push(img);
     }
     
-    // Adjust imageSeq to be 1-based index if needed, but GSAP progress is 0-1 so array index should be 0-based.
-    // Let's keep the array 0-indexed and adjust the frame number for GSAP.
     const imageSeq = { frame: 0 }; 
 
     function setupScrollTrigger() {
