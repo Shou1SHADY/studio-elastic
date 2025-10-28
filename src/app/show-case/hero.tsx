@@ -1,4 +1,3 @@
-
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
@@ -10,40 +9,60 @@ import { Progress } from "@/components/ui/progress";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const videoUrl =
-  "https://firebasestorage.googleapis.com/v0/b/elastic-canvas-prod.appspot.com/o/853878-hd.mp4?alt=media&token=c13035c9-9a18-4b77-963d-47201b3fe7c9";
-const posterUrl =
-  "https://images.pexels.com/videos/853878/free-video-853878.jpg?auto=compress&cs=tinysrgb&dpr=1&w=500";
-
-
 export function Hero({ dictionary }: { dictionary: Dictionary }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
+  const frameCount = 148;
+  const currentFrame = (index: number) =>
+    `/frames/frame_${String(index).padStart(3, "0")}.webp`;
+
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
 
-    const handleMetadata = () => {
-      setLoading(false);
-      video.pause();
+    const images: HTMLImageElement[] = [];
+    let loadedImageCount = 0;
+    let failedImageCount = 0;
 
-      ScrollTrigger.create({
-        trigger: heroRef.current,
-        start: "top top",
-        end: "+=3000", // scroll length
-        scrub: 1.5,
-        pin: true,
-        anticipatePin: 1,
-        onUpdate: (self) => {
-          if (video && video.duration) {
-            video.currentTime = self.progress * video.duration;
-          }
-        },
-      });
+    const onImageLoad = (event: Event) => {
+      if (event.type === 'error') {
+        failedImageCount++;
+        console.error(`Failed to load frame: ${(event.target as HTMLImageElement)?.src}`);
+      }
 
+      loadedImageCount++;
+      const percent = Math.round((loadedImageCount / frameCount) * 100);
+      setProgress(percent);
+
+      if (loadedImageCount === frameCount) {
+        if (failedImageCount > 0) {
+            console.error(`${failedImageCount} of ${frameCount} frames failed to load. Halting animation.`);
+            setLoading(false); // Hide loader but don't start animation
+            return;
+        }
+        setLoading(false);
+        render(); // Render the first frame
+        setupScrollTrigger();
+      }
+    };
+    
+    for (let i = 1; i <= frameCount; i++) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = currentFrame(i);
+        img.onload = onImageLoad;
+        img.onerror = onImageLoad; // Trigger onImageLoad even on error
+        images.push(img);
+    }
+    
+    const imageSeq = { frame: 0 };
+
+    function setupScrollTrigger() {
       // Fade content as video plays
       gsap.fromTo(
         ".hero-content",
@@ -59,25 +78,41 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
           },
         }
       );
-    };
 
-    const handleProgress = () => {
-        if (video.buffered.length > 0 && video.duration) {
-            const percent = (video.buffered.end(0) / video.duration) * 100;
-            setProgress(Math.min(percent, 100));
-            if (percent >= 100) {
-                setLoading(false);
-            }
+      ScrollTrigger.create({
+        trigger: heroRef.current,
+        start: "top top",
+        end: "+=3000", // scroll length
+        scrub: 1.5,
+        pin: true,
+        anticipatePin: 1,
+        onUpdate: (self) => {
+          const frameIndex = Math.floor(self.progress * (frameCount -1));
+          imageSeq.frame = frameIndex;
+          requestAnimationFrame(render);
+        },
+      });
+    }
+
+    function render() {
+      const img = images[imageSeq.frame];
+      if (img && context) {
+         // Scale image to fit canvas while maintaining aspect ratio
+        canvas.width = 1920;
+        canvas.height = 1080;
+        const hRatio = canvas.width / img.width;
+        const vRatio = canvas.height / img.height;
+        const ratio = Math.max(hRatio, vRatio);
+        if (img.complete && img.naturalHeight > 0) {
+            const centerShift_x = (canvas.width - img.width * ratio) / 2;
+            const centerShift_y = (canvas.height - img.height * ratio) / 2;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
         }
-    };
-    
-    video.addEventListener("loadedmetadata", handleMetadata);
-    video.addEventListener("progress", handleProgress);
-
+      }
+    }
 
     return () => {
-      video.removeEventListener("loadedmetadata", handleMetadata);
-      video.removeEventListener("progress", handleProgress);
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, []);
@@ -101,15 +136,9 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         </div>
       )}
       <div className="absolute inset-0 z-10 w-full h-full">
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          poster={posterUrl}
-          className="absolute inset-0 h-full w-full object-cover brightness-[0.6] scale-105 will-change-transform"
-          playsInline
-          muted
-          preload="auto"
-          crossOrigin="anonymous"
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 h-full w-full object-cover scale-105 will-change-transform"
         />
       </div>
       <div className="hero-content pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center text-center text-white">
