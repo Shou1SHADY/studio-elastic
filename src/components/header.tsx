@@ -3,6 +3,9 @@
 import { LanguageSwitcher } from './language-switcher';
 import { Dictionary } from '@/lib/dictionaries';
 import { gsap } from 'gsap';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const ElasticCanvasLogo = () => (
   <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-foreground">
@@ -19,33 +22,36 @@ type HeaderProps = {
 };
 
 export function Header({ dictionary, lang }: HeaderProps) {
-  const scrollTo = (id: string) => {
-    gsap.to(window, { duration: 1, scrollTo: id, ease: 'power2.inOut' });
-  };
+  const pathname = usePathname();
+  const currentPath = pathname.split('/').pop() || '';
 
   const navItems = [
-    { id: '#about', label: dictionary.header.about },
-    { id: '#craft', label: dictionary.header.craft },
-    { id: '#gallery', label: dictionary.header.gallery },
-    { id: '#contact', label: dictionary.header.contact },
+    { href: `/${lang}`, label: dictionary.header.home, path: '' },
+    { href: `/${lang}/about`, label: dictionary.header.about, path: 'about' },
+    { href: `/${lang}/craft`, label: dictionary.header.craft, path: 'craft' },
+    { href: `/${lang}/gallery`, label: dictionary.header.gallery, path: 'gallery' },
+    { href: `/${lang}/contact`, label: dictionary.header.contact, path: 'contact' },
   ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 p-4">
       <div className="container mx-auto flex items-center justify-between rounded-lg border border-border/20 bg-background/50 p-2 px-4 shadow-lg backdrop-blur-sm">
-        <a href="#hero" onClick={(e) => { e.preventDefault(); scrollTo('#hero'); }} className="flex items-center gap-2 font-headline text-lg font-bold">
+        <Link href={`/${lang}`} className="flex items-center gap-2 font-headline text-lg font-bold">
           <ElasticCanvasLogo />
           <span>Elastic Canvas</span>
-        </a>
+        </Link>
         <nav className="hidden items-center gap-4 md:flex">
           {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => scrollTo(item.id)}
-              className="font-headline text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "font-headline text-sm font-medium transition-colors hover:text-foreground",
+                currentPath === item.path ? "text-foreground" : "text-muted-foreground"
+              )}
             >
               {item.label}
-            </button>
+            </Link>
           ))}
         </nav>
         <div className="flex items-center gap-2">
