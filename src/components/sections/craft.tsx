@@ -1,4 +1,3 @@
-
 import type { Dictionary } from '@/lib/dictionaries';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 
@@ -11,7 +10,7 @@ export function Craft({ dictionary }: { dictionary: Dictionary }) {
   ];
 
   return (
-    <section id="craft" className="animated-section container mx-auto px-4 py-16">
+    <section id="craft" className="container mx-auto px-4 py-16">
       <div className="text-center">
         <h2 className="font-headline text-4xl md:text-5xl font-bold">{dictionary.craft.title}</h2>
         <p className="mt-4 text-lg text-muted-foreground">{dictionary.craft.subtitle}</p>

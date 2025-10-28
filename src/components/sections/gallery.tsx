@@ -1,4 +1,3 @@
-
 import type { Dictionary } from '@/lib/dictionaries';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -8,7 +7,7 @@ export function Gallery({ dictionary }: { dictionary: Dictionary }) {
   const images = PlaceHolderImages.slice(0, 6);
 
   return (
-    <section id="gallery" className="animated-section container mx-auto px-4 py-16">
+    <section id="gallery" className="container mx-auto px-4 py-16">
       <div className="text-center">
         <h2 className="font-headline text-4xl md:text-5xl font-bold">{dictionary.gallery.title}</h2>
         <p className="mt-4 text-lg text-muted-foreground">{dictionary.gallery.subtitle}</p>

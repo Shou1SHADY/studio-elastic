@@ -1,4 +1,3 @@
-
 'use client';
 import type { Dictionary } from '@/lib/dictionaries';
 import { useFormStatus } from 'react-dom';
@@ -52,7 +51,7 @@ export function Contact({ dictionary, lang }: { dictionary: Dictionary, lang: 'e
   }, [state, toast]);
   
   return (
-    <section id="contact" className="animated-section container mx-auto px-4 py-16">
+    <section id="contact" className="container mx-auto px-4 py-16">
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="font-headline text-4xl md:text-5xl font-bold">{dictionary.contact.title}</h2>
         <p className="mt-4 text-lg text-muted-foreground">{dictionary.contact.subtitle}</p>
