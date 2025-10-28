@@ -18,7 +18,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
   useEffect(() => {
     const frameCount = 148;
     const currentFrame = (index: number) =>
-      `/frames/frame_${String(index).padStart(3, "0")}.png`;
+      `/frames/${String(index).padStart(2, "0")}.png`;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -50,8 +50,9 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         setupScrollTrigger();
       }
     };
-
-    for (let i = 0; i < frameCount; i++) {
+    
+    // Start from 1 to match file names like "01.png"
+    for (let i = 1; i <= frameCount; i++) {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.src = currentFrame(i);
@@ -60,7 +61,9 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         images.push(img);
     }
     
-    const imageSeq = { frame: 0 };
+    // Adjust imageSeq to be 1-based index if needed, but GSAP progress is 0-1 so array index should be 0-based.
+    // Let's keep the array 0-indexed and adjust the frame number for GSAP.
+    const imageSeq = { frame: 0 }; 
 
     function setupScrollTrigger() {
       gsap.to(imageSeq, {
