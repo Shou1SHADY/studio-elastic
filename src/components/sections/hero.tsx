@@ -109,7 +109,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         ref={videoRef}
         src={videoUrl}
         poster={posterUrl}
-        className="absolute inset-0 h-full w-full object-cover brightness-75"
+        className="absolute inset-0 h-full w-full object-cover"
         playsInline
         muted
         preload="auto"

@@ -19,9 +19,7 @@ export default async function Home({ params: { lang } }: Props) {
     <main>
       <Hero dictionary={dictionary} />
       <div className="space-y-32 md:space-y-48">
-        <AnimatedContent>
-          <About dictionary={dictionary} />
-        </AnimatedContent>
+        <About dictionary={dictionary} />
         <AnimatedContent>
           <Craft dictionary={dictionary} />
         </AnimatedContent>
