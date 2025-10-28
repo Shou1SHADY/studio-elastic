@@ -17,7 +17,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
 
   const frameCount = 148;
   const currentFrame = (index: number) =>
-    `/frames/frame_${String(index).padStart(3, "0")}.webp`;
+    `/frames/frame_${String(index).padStart(3, "0")}.png`;
 
   useEffect(() => {
     const canvas = canvasRef.current;
