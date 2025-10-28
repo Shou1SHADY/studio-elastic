@@ -40,72 +40,64 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         video.play();
         return;
       }
-      
+
+      setLoading(false);
       video.pause();
-      
-      gsap.to(video, {
-        currentTime: video.duration,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: 'top top',
-          end: '+=3000',
-          scrub: 1.5,
-          pin: true,
-          anticipatePin: 1,
+
+      ScrollTrigger.create({
+        trigger: heroRef.current,
+        start: 'top top',
+        end: '+=2500',
+        scrub: 1.2,
+        pin: true,
+        anticipatePin: 1,
+        onUpdate: self => {
+          const video = videoRef.current;
+          if (video && video.duration) {
+            video.currentTime = self.progress * video.duration;
+          }
         },
       });
 
       // Fade content as video plays
       gsap.fromTo(
-        ".hero-content",
-        { opacity: 1 },
+        '.hero-content',
+        { opacity: 1, y: 0 },
         {
           opacity: 0,
+          y: -100,
           scrollTrigger: {
             trigger: heroRef.current,
-            start: "top top",
-            end: "center top",
+            start: 'top top',
+            end: 'bottom top',
             scrub: true,
           },
         }
       );
     };
-    
+
     const onProgress = () => {
       if (video.buffered.length > 0 && video.duration) {
         const p = (video.buffered.end(0) / video.duration) * 100;
         setProgress(p);
-        if (p >= 99) { // Sometimes it doesn't reach 100
+        if (p >= 99) {
+          // Sometimes it doesn't reach 100
           setLoading(false);
         }
       }
-    }
+    };
 
     video.addEventListener('progress', onProgress);
-    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('canplaythrough', handleCanPlay);
 
-    // Fallback if events don't fire
-    const interval = setInterval(() => {
-      if(video.readyState >= 3){
-         onProgress();
-         if(video.readyState >= 4 && !isMobile){
-           handleCanPlay();
-           clearInterval(interval);
-         }
-      }
-    }, 500);
-
-
-    if (video.readyState >= 3) {
+    if (video.readyState >= 4) {
       handleCanPlay();
     }
 
     return () => {
       video.removeEventListener('progress', onProgress);
-      video.removeEventListener('canplay', handleCanPlay);
-      clearInterval(interval);
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+      video.removeEventListener('canplaythrough', handleCanPlay);
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
     };
   }, [isMobile]);
 
@@ -124,26 +116,19 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         ref={videoRef}
         src={videoUrl}
         poster={posterUrl}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover brightness-[0.6] scale-105 will-change-transform"
         playsInline
         muted
-        loop={isMobile}
-        autoPlay={isMobile}
         preload="auto"
+        crossOrigin="anonymous"
       />
 
       <div className="hero-content pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center text-center text-white">
         <div className="bg-black/30 backdrop-blur-sm p-8 rounded-lg">
-          <h1
-            className="font-headline text-4xl md:text-7xl font-bold"
-            data-speed="0.95"
-          >
+          <h1 className="font-headline text-4xl md:text-7xl font-bold" data-speed="0.95">
             {dictionary.hero.title}
           </h1>
-          <p
-            className="mt-4 max-w-xl text-lg md:text-xl text-neutral-300"
-            data-speed="0.9"
-          >
+          <p className="mt-4 max-w-xl text-lg md:text-xl text-neutral-300" data-speed="0.9">
             {dictionary.hero.subtitle}
           </p>
           <Button
