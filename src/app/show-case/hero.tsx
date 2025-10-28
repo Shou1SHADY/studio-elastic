@@ -1,127 +1,134 @@
-'use client';
-import { useRef, useEffect, useState } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Dictionary } from '@/lib/dictionaries';
-import { Button } from '@/components/ui/button';
-import { ArrowDown } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Progress } from '@/components/ui/progress';
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Dictionary } from "@/lib/dictionaries";
+import { Button } from "@/components/ui/button";
+import { ArrowDown } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Progress } from "@/components/ui/progress";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const videoUrl =
-  'https://firebasestorage.googleapis.com/v0/b/elastic-canvas-prod.appspot.com/o/853878-hd.mp4?alt=media&token=c13035c9-9a18-4b77-963d-47201b3fe7c9';
-const posterUrl =
-  'https://images.pexels.com/videos/853878/free-video-853878.jpg?auto=compress&cs=tinysrgb&dpr=1&w=500';
+// Corrected URL for the publicly accessible frames
+const frameUrl = "https://storage.googleapis.com/elastic-canvas-prod-website-assets/frames/";
 
 export function Hero({ dictionary }: { dictionary: Dictionary }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const heroRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const isMobile = useIsMobile();
+
+  const frameCount = 120; // total number of frames
+  const currentFrame = (index: number) =>
+    `${frameUrl}frame_${index.toString().padStart(4, "0")}.webp`;
 
   const scrollTo = (id: string) => {
     gsap.to(window, {
       duration: 1,
       scrollTo: { y: id, autoKill: false },
-      ease: 'power2.inOut',
+      ease: "power2.inOut",
     });
   };
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleCanPlay = () => {
-      if (isMobile) {
-        setLoading(false);
-        video.play();
-        return;
-      }
-
+    if (isMobile) {
       setLoading(false);
-      video.pause();
-
-      ScrollTrigger.create({
-        trigger: heroRef.current,
-        start: 'top top',
-        end: '+=2500',
-        scrub: 1.2,
-        pin: true,
-        anticipatePin: 1,
-        onUpdate: self => {
-          const video = videoRef.current;
-          if (video && video.duration) {
-            video.currentTime = self.progress * video.duration;
-          }
-        },
-      });
-
-      // Fade content as video plays
-      gsap.fromTo(
-        '.hero-content',
-        { opacity: 1, y: 0 },
-        {
-          opacity: 0,
-          y: -100,
-          scrollTrigger: {
-            trigger: heroRef.current,
-            start: 'top top',
-            end: 'bottom top',
-            scrub: true,
-          },
-        }
-      );
-    };
-
-    const onProgress = () => {
-      if (video.buffered.length > 0 && video.duration) {
-        const p = (video.buffered.end(0) / video.duration) * 100;
-        setProgress(p);
-        if (p >= 99) {
-          // Sometimes it doesn't reach 100
-          setLoading(false);
-        }
-      }
-    };
-
-    video.addEventListener('progress', onProgress);
-    video.addEventListener('canplaythrough', handleCanPlay);
-
-    if (video.readyState >= 4) {
-      handleCanPlay();
+      return;
     }
 
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    
+    canvas.width = 1920;
+    canvas.height = 1080;
+
+    const images: HTMLImageElement[] = [];
+    const imageSeq = { frame: 0 };
+    let loadedImages = 0;
+
+    const onImageLoad = () => {
+      loadedImages++;
+      setProgress((loadedImages / frameCount) * 100);
+      if (loadedImages === frameCount) {
+        setLoading(false);
+        render();
+      }
+    };
+
+    for (let i = 0; i < frameCount; i++) {
+      const img = new Image();
+      img.crossOrigin = "anonymous"; // Handle potential CORS issues
+      img.src = currentFrame(i);
+      img.onload = onImageLoad;
+      images.push(img);
+    }
+
+    function render() {
+      if (!images[imageSeq.frame]) return;
+      context?.clearRect(0, 0, canvas.width, canvas.height);
+      context?.drawImage(images[imageSeq.frame], 0, 0, canvas.width, canvas.height);
+    }
+    
+    images[0].onload = () => {
+        onImageLoad(); // Increment counter
+        render(); // Render first frame
+    };
+    
+    const tl = gsap.timeline({
+        scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "+=3000",
+            scrub: 1.5,
+            pin: true,
+            anticipatePin: 1,
+        },
+    });
+
+    tl.to(imageSeq, {
+      frame: frameCount - 1,
+      snap: "frame",
+      ease: "none",
+      onUpdate: render,
+    });
+    
+    // Fade out hero content
+    tl.to(".hero-content", {
+        opacity: 0,
+        y: -100,
+        ease: "power1.in"
+    }, 0);
+
+
     return () => {
-      video.removeEventListener('progress', onProgress);
-      video.removeEventListener('canplaythrough', handleCanPlay);
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, [isMobile]);
 
   return (
     <section ref={heroRef} id="home" className="relative h-screen w-full overflow-hidden">
-      {loading && !isMobile && (
-        <div className="absolute inset-0 flex items-center justify-center z-30 bg-background">
-          <div className="w-1/3 text-center">
-            <p className="font-headline text-lg mb-2">Loading Visuals...</p>
-            <Progress value={progress} />
-          </div>
-        </div>
-      )}
-
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        poster={posterUrl}
-        className="absolute inset-0 h-full w-full object-cover brightness-[0.6] scale-105 will-change-transform"
-        playsInline
-        muted
-        preload="auto"
-        crossOrigin="anonymous"
-      />
+        {isMobile ? (
+             <img src={currentFrame(0)} alt="Preview" className="absolute inset-0 h-full w-full object-cover brightness-[0.6]"/>
+        ) : (
+          <>
+            {loading && (
+                <div className="absolute inset-0 flex items-center justify-center z-30 bg-background">
+                    <div className="w-1/3 text-center">
+                    <p className="font-headline text-lg mb-2">Loading Cinematic Frames...</p>
+                    <Progress value={progress} />
+                    </div>
+                </div>
+            )}
+            <canvas
+                ref={canvasRef}
+                className="absolute inset-0 h-full w-full object-cover brightness-[0.6]"
+            />
+          </>
+        )}
 
       <div className="hero-content pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center text-center text-white">
         <div className="bg-black/30 backdrop-blur-sm p-8 rounded-lg">
@@ -135,7 +142,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
             size="lg"
             variant="outline"
             className="mt-8 pointer-events-auto bg-transparent text-white border-white hover:bg-white hover:text-black"
-            onClick={() => scrollTo('#about')}
+            onClick={() => scrollTo("#about")}
           >
             {dictionary.hero.cta}
             <ArrowDown className="ms-2 h-5 w-5 rtl:hidden" />
