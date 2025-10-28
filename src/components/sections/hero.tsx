@@ -1,4 +1,3 @@
-
 'use client';
 import { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
@@ -7,107 +6,102 @@ import { Dictionary } from '@/lib/dictionaries';
 import { Button } from '../ui/button';
 import { ArrowDown } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Progress } from '../ui/progress';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const frameCount = 120;
-const frameUrl = (frame: number) => `https://picsum.photos/seed/frame${frame}/1920/1080`;
+// A royalty-free video from Pexels, suitable for a background.
+const videoUrl = "https://firebasestorage.googleapis.com/v0/b/elastic-canvas-prod.appspot.com/o/853878-hd.mp4?alt=media&token=c13035c9-9a18-4b77-963d-47201b3fe7c9";
+const posterUrl = "https://images.pexels.com/videos/853878/free-video-853878.jpg?auto=compress&cs=tinysrgb&dpr=1&w=500";
+
 
 export function Hero({ dictionary }: { dictionary: Dictionary }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const isMobile = useIsMobile();
   
   const scrollTo = (id: string) => {
-    gsap.to(window, { duration: 1, scrollTo: id, ease: 'power2.inOut' });
+    gsap.to(window, { duration: 1, scrollTo: { y: id, autoKill: false }, ease: 'power2.inOut' });
   };
 
   useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // On mobile, just play the video normally without scroll-based control.
     if (isMobile) {
       setLoading(false);
+      video.play();
       return;
     }
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const context = canvas.getContext('2d');
-    if (!context) return;
     
-    canvas.width = 1920;
-    canvas.height = 1080;
-    
-    const images: HTMLImageElement[] = [];
-    const frame = { current: 0 };
-    let loadedImages = 0;
-
-    const render = () => {
-      if (images[frame.current]) {
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(images[frame.current], 0, 0);
-      }
+    // On desktop, use GSAP ScrollTrigger to control video playback
+    const handleProgress = () => {
+        const progress = Math.round((video.buffered.end(0) / video.duration) * 100);
+        setProgress(progress);
+        if (progress >= 95) { // Close enough to 100%
+            setLoading(false);
+            video.removeEventListener('progress', handleProgress);
+        }
     };
     
-    for (let i = 0; i < frameCount; i++) {
-      const img = new Image();
-      img.src = frameUrl(i + 1);
-      images.push(img);
-      img.onload = () => {
-        loadedImages++;
-        setProgress(Math.round((loadedImages / frameCount) * 100));
-        if (loadedImages === 1) {
-          // Render first frame as soon as it's loaded
-          render();
-        }
-        if (loadedImages === frameCount) {
-          setLoading(false);
-        }
-      };
-    }
-
+    video.addEventListener('progress', handleProgress);
+    // Ensure it can play for scrubbing
+    video.play().then(() => video.pause()).catch(() => {});
+    
     const ctx = gsap.context(() => {
+      // Wait for video metadata to be loaded to get the duration
+      video.onloadedmetadata = () => {
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: heroRef.current,
             start: 'top top',
             end: '+=250%',
             pin: true,
-            scrub: 1,
+            scrub: 1.5,
             anticipatePin: 1,
           },
         });
 
-        tl.to(frame, {
-            current: frameCount - 1,
-            snap: 'current',
+        // Scrub through the video's timeline
+        tl.to(video, {
+            currentTime: video.duration,
             ease: 'none',
-            onUpdate: render,
         }, 0)
+        // Fade out the text content
         .fromTo('.hero-content', { autoAlpha: 1 }, { autoAlpha: 0, ease: 'none' }, 0);
+      }
     }, heroRef);
 
-    return () => ctx.revert();
+    return () => {
+      video.removeEventListener('progress', handleProgress);
+      ctx.revert();
+    };
   }, [isMobile]);
 
   return (
-    <section ref={heroRef} id="hero" className="relative h-screen w-full">
+    <section ref={heroRef} id="home" className="relative h-screen w-full">
       {loading && !isMobile && (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-background">
-          <div className="text-center">
+          <div className="w-1/3 text-center">
             <p className="font-headline text-lg">Loading Visuals...</p>
-            <p className="text-accent">{progress}%</p>
+            <Progress value={progress} className="mt-2" />
           </div>
         </div>
       )}
       
-      {isMobile ? (
-        <div className="absolute inset-0">
-          <img src={frameUrl(1)} alt="Elastic Canvas background" className="h-full w-full object-cover brightness-50"/>
-        </div>
-      ) : (
-        <canvas ref={canvasRef} className="absolute inset-0 h-full w-full object-cover" />
-      )}
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        poster={posterUrl}
+        className="absolute inset-0 h-full w-full object-cover brightness-75"
+        playsInline
+        muted
+        loop={isMobile} // Loop on mobile for continuous background
+        preload="auto"
+      />
       
       <div className="hero-content pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center text-center text-white">
         <div className="bg-black/30 backdrop-blur-sm p-8 rounded-lg">
