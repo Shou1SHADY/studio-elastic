@@ -1,7 +1,8 @@
+
 import { getDictionary } from '@/lib/dictionaries';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-import { Hero } from '@/components/sections/hero';
+import { Hero } from '@/app/show-case/hero';
 import { About } from '@/components/sections/about';
 import { Craft } from '@/components/sections/craft';
 import { Gallery } from '@/components/sections/gallery';
@@ -22,7 +23,7 @@ export default async function Home({ params: { lang } }: Props) {
       <Header dictionary={dictionary} lang={lang} />
       <main>
         <Suspense fallback={<div className="h-screen w-full bg-background" />}>
-          <Hero dictionary={dictionary} lang={lang} />
+          <Hero dictionary={dictionary} />
         </Suspense>
         <div className="space-y-32 md:space-y-48">
           <About dictionary={dictionary} />
