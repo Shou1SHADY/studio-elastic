@@ -1,4 +1,3 @@
-
 'use client';
 import { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
@@ -35,16 +34,15 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
     const video = videoRef.current;
     if (!video) return;
 
-    const handleMetadata = () => {
+    const handleCanPlay = () => {
       if (isMobile) {
         setLoading(false);
         video.play();
         return;
       }
-
-      setLoading(false);
+      
       video.pause();
-
+      
       gsap.to(video, {
         currentTime: video.duration,
         ease: 'none',
@@ -74,36 +72,38 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
       );
     };
     
-    video.oncanplay = () => {
-       handleMetadata();
-    };
-
     const onProgress = () => {
-       if (video.buffered.length > 0 && video.duration) {
+      if (video.buffered.length > 0 && video.duration) {
         const p = (video.buffered.end(0) / video.duration) * 100;
         setProgress(p);
-        if (p >= 100) {
+        if (p >= 99) { // Sometimes it doesn't reach 100
           setLoading(false);
         }
       }
     }
 
     video.addEventListener('progress', onProgress);
+    video.addEventListener('canplay', handleCanPlay);
 
-    // Fallback for browsers that don't fire progress consistently
+    // Fallback if events don't fire
     const interval = setInterval(() => {
-      if(video.readyState === 4){
+      if(video.readyState >= 3){
          onProgress();
+         if(video.readyState >= 4 && !isMobile){
+           handleCanPlay();
+           clearInterval(interval);
+         }
       }
     }, 500);
 
 
     if (video.readyState >= 3) {
-      handleMetadata();
+      handleCanPlay();
     }
 
     return () => {
       video.removeEventListener('progress', onProgress);
+      video.removeEventListener('canplay', handleCanPlay);
       clearInterval(interval);
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
