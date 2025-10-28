@@ -17,7 +17,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const frameCount = 17; // Adjusted to likely number of frames
+    const frameCount = 10; // Adjusted to the correct number of frames
     const currentFrame = (index: number) =>
       `/frames/${String(index).padStart(2, "0")}.png`;
 
