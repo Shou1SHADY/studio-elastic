@@ -82,7 +82,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-html.gsap-is-scrolling {
-  scroll-behavior: auto;
-}
