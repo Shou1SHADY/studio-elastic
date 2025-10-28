@@ -10,19 +10,17 @@ import { Progress } from "@/components/ui/progress";
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Corrected URL for the publicly accessible frames
-const frameUrl = "https://storage.googleapis.com/elastic-canvas-prod-website-assets/frames/";
+const videoUrl =
+  "https://firebasestorage.googleapis.com/v0/b/elastic-canvas-prod.appspot.com/o/853878-hd.mp4?alt=media&token=c13035c9-9a18-4b77-963d-47201b3fe7c9";
+const posterUrl =
+  "https://images.pexels.com/videos/853878/free-video-853878.jpg?auto=compress&cs=tinysrgb&dpr=1&w=500";
 
 export function Hero({ dictionary }: { dictionary: Dictionary }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const isMobile = useIsMobile();
-
-  const frameCount = 120; // total number of frames
-  const currentFrame = (index: number) =>
-    `${frameUrl}frame_${index.toString().padStart(4, "0")}.webp`;
 
   const scrollTo = (id: string) => {
     gsap.to(window, {
@@ -33,109 +31,116 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
   };
 
   useEffect(() => {
-    if (isMobile) {
-      setLoading(false);
-      return;
-    }
+    const video = videoRef.current;
+    if (!video) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-    
-    canvas.width = 1920;
-    canvas.height = 1080;
-
-    const images: HTMLImageElement[] = [];
-    const imageSeq = { frame: 0 };
-    let loadedImages = 0;
-
-    const onImageLoad = () => {
-      loadedImages++;
-      setProgress((loadedImages / frameCount) * 100);
-      if (loadedImages === frameCount) {
+    const handleMetadata = () => {
+      // Once metadata is loaded, enable scrubbing
+      if (isMobile) {
         setLoading(false);
-        render();
+        video.play();
+        return;
+      }
+
+      setLoading(false);
+      video.pause();
+
+      // Create scroll-controlled scrub
+      const st = ScrollTrigger.create({
+        trigger: heroRef.current,
+        start: "top top",
+        end: "+=3000", // scroll length
+        scrub: 1.5,
+        pin: true,
+        anticipatePin: 1,
+        onUpdate: (self) => {
+          if (!video.duration) return;
+          video.currentTime = self.progress * video.duration;
+        },
+      });
+
+      // Fade content as video plays
+      gsap.fromTo(
+        ".hero-content",
+        { opacity: 1 },
+        {
+          opacity: 0,
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        }
+      );
+
+      return () => {
+        st.kill();
+        ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
       }
     };
 
-    for (let i = 0; i < frameCount; i++) {
-      const img = new Image();
-      img.crossOrigin = "anonymous"; // Handle potential CORS issues
-      img.src = currentFrame(i);
-      img.onload = onImageLoad;
-      images.push(img);
-    }
+    // Show progress bar while loading
+    const interval = setInterval(() => {
+      if (video.buffered.length > 0 && video.duration) {
+        const p = (video.buffered.end(0) / video.duration) * 100;
+        setProgress(Math.min(p, 100));
+        if (p >= 100) {
+          clearInterval(interval);
+        }
+      }
+    }, 200);
 
-    function render() {
-      if (!images[imageSeq.frame]) return;
-      context?.clearRect(0, 0, canvas.width, canvas.height);
-      context?.drawImage(images[imageSeq.frame], 0, 0, canvas.width, canvas.height);
-    }
-    
-    images[0].onload = () => {
-        onImageLoad(); // Increment counter
-        render(); // Render first frame
-    };
-    
-    const tl = gsap.timeline({
-        scrollTrigger: {
-            trigger: heroRef.current,
-            start: "top top",
-            end: "+=3000",
-            scrub: 1.5,
-            pin: true,
-            anticipatePin: 1,
-        },
+    video.addEventListener("loadedmetadata", handleMetadata);
+    video.addEventListener("canplaythrough", () => {
+      clearInterval(interval);
+      setProgress(100);
+      setLoading(false);
     });
-
-    tl.to(imageSeq, {
-      frame: frameCount - 1,
-      snap: "frame",
-      ease: "none",
-      onUpdate: render,
-    });
-    
-    // Fade out hero content
-    tl.to(".hero-content", {
-        opacity: 0,
-        y: -100,
-        ease: "power1.in"
-    }, 0);
-
 
     return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      clearInterval(interval);
+      video.removeEventListener("loadedmetadata", handleMetadata);
+      ScrollTrigger.getAll().forEach((st) => st.kill());
     };
   }, [isMobile]);
 
   return (
     <section ref={heroRef} id="home" className="relative h-screen w-full overflow-hidden">
-        {isMobile ? (
-             <img src={currentFrame(0)} alt="Preview" className="absolute inset-0 h-full w-full object-cover brightness-[0.6]"/>
-        ) : (
-          <>
-            {loading && (
-                <div className="absolute inset-0 flex items-center justify-center z-30 bg-background">
-                    <div className="w-1/3 text-center">
-                    <p className="font-headline text-lg mb-2">Loading Cinematic Frames...</p>
-                    <Progress value={progress} />
-                    </div>
-                </div>
-            )}
-            <canvas
-                ref={canvasRef}
-                className="absolute inset-0 h-full w-full object-cover brightness-[0.6]"
-            />
-          </>
-        )}
+      {loading && !isMobile && (
+        <div className="absolute inset-0 flex items-center justify-center z-30 bg-background">
+          <div className="w-1/3 text-center">
+            <p className="font-headline text-lg mb-2">Loading Cinematic Experience...</p>
+            <Progress value={progress} />
+          </div>
+        </div>
+      )}
+
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        poster={posterUrl}
+        className="absolute inset-0 h-full w-full object-cover brightness-[0.6] scale-105"
+        playsInline
+        muted
+        loop={isMobile}
+        autoPlay={isMobile}
+        preload="auto"
+        crossOrigin="anonymous"
+      />
 
       <div className="hero-content pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center text-center text-white">
         <div className="bg-black/30 backdrop-blur-sm p-8 rounded-lg">
-          <h1 className="font-headline text-4xl md:text-7xl font-bold" data-speed="0.95">
+          <h1
+            className="font-headline text-4xl md:text-7xl font-bold"
+            data-speed="0.95"
+          >
             {dictionary.hero.title}
           </h1>
-          <p className="mt-4 max-w-xl text-lg md:text-xl text-neutral-300" data-speed="0.9">
+          <p
+            className="mt-4 max-w-xl text-lg md:text-xl text-neutral-300"
+            data-speed="0.9"
+          >
             {dictionary.hero.subtitle}
           </p>
           <Button
