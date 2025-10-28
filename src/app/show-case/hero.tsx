@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
@@ -32,12 +33,24 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
     const images: HTMLImageElement[] = [];
     const imageSeq = { frame: 0 };
     let loadedImageCount = 0;
+    let failedImageCount = 0;
 
-    const onImageLoad = () => {
+    const onImageLoad = (event: Event) => {
+      if (event.type === 'error') {
+        failedImageCount++;
+        console.error(`Failed to load frame: ${(event.target as HTMLImageElement)?.src}`);
+      }
+
       loadedImageCount++;
       const percent = Math.floor((loadedImageCount / frameCount) * 100);
       setProgress(percent);
       if (loadedImageCount === frameCount) {
+        if (failedImageCount > 0) {
+          console.error("Animation failed to start because some frames could not be loaded. Please check the /public/frames/ directory and file names.");
+          setLoading(false); // Hide loader, but don't start animation
+          return;
+        }
+
         setLoading(false);
         render(); // Render the first frame
 
@@ -77,9 +90,11 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
     };
 
     function render() {
+      // Ensure we don't try to render if frames failed
+      if (failedImageCount > 0) return;
       if (images[imageSeq.frame]) {
         const img = images[Math.floor(imageSeq.frame)];
-        if (img && context) {
+        if (img && context && img.complete && img.naturalHeight !== 0) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             // Scale the image to fit the canvas while maintaining aspect ratio
             const hRatio = canvas.width / img.width;
@@ -95,9 +110,10 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
     // Preload images
     for (let i = 1; i <= frameCount; i++) {
         const img = new Image();
+        img.crossOrigin = "anonymous";
         img.src = currentFrame(i);
         img.onload = onImageLoad;
-        img.onerror = onImageLoad; // Count errors as "loaded" to not block forever
+        img.onerror = onImageLoad;
         images.push(img);
     }
 
