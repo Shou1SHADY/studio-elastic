@@ -1,8 +1,8 @@
 
 'use client';
 import type { Dictionary } from '@/lib/dictionaries';
-import { useFormState, useFormStatus } from 'react-dom';
-import { useEffect, useRef } from 'react';
+import { useFormStatus } from 'react-dom';
+import { useActionState, useEffect, useRef } from 'react';
 import { submitContactForm, type FormState } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,7 @@ const initialState: FormState = {
 };
 
 export function Contact({ dictionary, lang }: { dictionary: Dictionary, lang: 'en' | 'ar' }) {
-  const [state, formAction] = useFormState(submitContactForm.bind(null, lang), initialState);
+  const [state, formAction] = useActionState(submitContactForm.bind(null, lang), initialState);
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
 
