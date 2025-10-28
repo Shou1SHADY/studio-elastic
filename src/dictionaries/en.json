@@ -1,0 +1,52 @@
+
+{
+  "header": {
+    "about": "About",
+    "craft": "Our Craft",
+    "gallery": "Gallery",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Where Art Meets Rubber",
+    "subtitle": "Crafting bespoke keychains and patches that tell your story.",
+    "cta": "Explore Our Craft"
+  },
+  "about": {
+    "title": "About Elastic Canvas",
+    "paragraph1": "Founded on the principle of tangible creativity, Elastic Canvas transforms your ideas into durable, high-quality rubber art. We are a team of designers and artisans dedicated to pushing the boundaries of what's possible with custom keychains and patches.",
+    "paragraph2": "Our process is a fusion of modern technology and traditional craftsmanship, ensuring every piece is not just a product, but a personal statement."
+  },
+  "craft": {
+    "title": "Our Craft",
+    "subtitle": "From Concept to Creation",
+    "step1_title": "1. Design & Consultation",
+    "step1_desc": "We work closely with you to translate your vision into a production-ready design.",
+    "step2_title": "2. Precision Molding",
+    "step2_desc": "Using state-of-the-art technology, we create precise molds that capture every detail.",
+    "step3_title": "3. Material Injection",
+    "step3_desc": "We inject vibrant, durable PVC rubber, bringing your design to life layer by layer.",
+    "step4_title": "4. Quality Assurance",
+    "step4_desc": "Each piece is meticulously inspected to meet our high standards of quality and durability."
+  },
+  "gallery": {
+    "title": "Gallery",
+    "subtitle": "A Glimpse into Our Portfolio"
+  },
+  "contact": {
+    "title": "Start Your Project",
+    "subtitle": "Have an idea? Let's talk about how we can bring it to life.",
+    "name_label": "Your Name",
+    "name_placeholder": "Enter your name",
+    "email_label": "Your Email",
+    "email_placeholder": "Enter your email address",
+    "message_label": "Your Message",
+    "message_placeholder": "Describe your project or inquiry...",
+    "submit_button": "Send Inquiry",
+    "submit_button_pending": "Sending...",
+    "success_message": "Inquiry sent successfully! We will get back to you shortly.",
+    "error_message": "An error occurred. Please try again."
+  },
+  "footer": {
+    "copy": "Elastic Canvas. All rights reserved."
+  }
+}
