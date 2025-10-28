@@ -15,11 +15,11 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
-  const frameCount = 148;
-  const currentFrame = (index: number) =>
-    `/frames/frame_${String(index).padStart(3, "0")}.png`;
-
   useEffect(() => {
+    const frameCount = 148;
+    const currentFrame = (index: number) =>
+      `/frames/frame_${String(index).padStart(3, "0")}.png`;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d");
@@ -50,8 +50,8 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         setupScrollTrigger();
       }
     };
-    
-    for (let i = 1; i <= frameCount; i++) {
+
+    for (let i = 0; i < frameCount; i++) {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.src = currentFrame(i);
@@ -63,6 +63,21 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
     const imageSeq = { frame: 0 };
 
     function setupScrollTrigger() {
+      gsap.to(imageSeq, {
+        frame: frameCount - 1,
+        snap: "frame",
+        ease: "none",
+        scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "+=3000", // scroll length
+            scrub: 1.5,
+            pin: true,
+            anticipatePin: 1,
+        },
+        onUpdate: render,
+      });
+
       // Fade content as video plays
       gsap.fromTo(
         ".hero-content",
@@ -78,24 +93,10 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
           },
         }
       );
-
-      ScrollTrigger.create({
-        trigger: heroRef.current,
-        start: "top top",
-        end: "+=3000", // scroll length
-        scrub: 1.5,
-        pin: true,
-        anticipatePin: 1,
-        onUpdate: (self) => {
-          const frameIndex = Math.floor(self.progress * (frameCount -1));
-          imageSeq.frame = frameIndex;
-          requestAnimationFrame(render);
-        },
-      });
     }
 
     function render() {
-      const img = images[imageSeq.frame];
+      const img = images[Math.floor(imageSeq.frame)];
       if (img && context) {
          // Scale image to fit canvas while maintaining aspect ratio
         canvas.width = 1920;
