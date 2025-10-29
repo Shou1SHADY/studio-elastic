@@ -23,6 +23,14 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
     const context = canvas.getContext("2d");
     if (!context) return;
 
+    // 👇 Draw the first preloaded frame instantly if available
+    const firstFrame = (window as any).firstFrame;
+    if (firstFrame && firstFrame.complete) {
+      canvas.width = 1920;
+      canvas.height = 1080;
+      context.drawImage(firstFrame, 0, 0, canvas.width, canvas.height);
+    }
+
     // Wait for preloaded frames from the loading page
     let images: HTMLImageElement[] = [];
     
