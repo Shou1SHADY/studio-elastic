@@ -13,58 +13,112 @@ gsap.registerPlugin(ScrollTrigger);
 export function Hero({ dictionary }: { dictionary: Dictionary }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const frameCount = 10; // Adjusted to the correct number of frames
-    const currentFrame = (index: number) =>
-      `/frames/${String(index).padStart(2, "0")}.png`;
-
+    const frameCount = 100; // Updated to handle 100 frames
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    const images: HTMLImageElement[] = [];
-    let loadedImageCount = 0;
-    let failedImageCount = 0;
+    // Wait for preloaded frames from the loading page
+    let images: HTMLImageElement[] = [];
+    
+    const checkForPreloadedFrames = () => {
+      const preloadedFrames = (window as any).preloadedFrames;
+      const framesReady = (window as any).framesReady;
+      
+      if (preloadedFrames && framesReady && preloadedFrames.length >= frameCount) {
+        // Use preloaded frames
+        images = preloadedFrames;
+        
+             // Immediate render for faster first appearance
+             render(); // Render the first frame immediately
+             
+             // Pre-render next few frames for smoother scrolling
+             for (let i = 1; i <= Math.min(3, frameCount - 1); i++) {
+               const img = images[i];
+               if (img && img.complete) {
+                 const tempFrame = imageSeq.frame;
+                 imageSeq.frame = i;
+                 render();
+                 imageSeq.frame = tempFrame;
+               }
+             }
+             imageSeq.frame = 0; // Reset to first frame
+             render(); // Final render of first frame
 
-    const onImageLoad = (event: Event) => {
-      if (event.type === 'error') {
-        failedImageCount++;
-        console.error(`Failed to load frame: ${(event.target as HTMLImageElement)?.src}`);
-      }
+             setupScrollTrigger();
+      } else {
+        // Fallback: load frames if not preloaded (with faster loading)
+        const currentFrame = (index: number) =>
+          `/frames/${String(index).padStart(3, "0")}.png`;
+        
+        images = [];
+        let loadedImageCount = 0;
+        let failedImageCount = 0;
 
-      loadedImageCount++;
-      const percent = Math.round((loadedImageCount / frameCount) * 100);
-      setProgress(percent);
+        const onImageLoad = (event: Event) => {
+          if (event.type === 'error') {
+            failedImageCount++;
+            console.error(`Failed to load frame: ${(event.target as HTMLImageElement)?.src}`);
+          }
 
-      if (loadedImageCount === frameCount) {
-        if (failedImageCount > 0) {
-            console.error(`${failedImageCount} of ${frameCount} frames failed to load. Halting animation.`);
-            setLoading(false); // Hide loader but don't start animation
-            return;
+          loadedImageCount++;
+          const percent = Math.round((loadedImageCount / frameCount) * 100);
+          setProgress(percent);
+
+          if (loadedImageCount === frameCount) {
+            if (failedImageCount > 0) {
+                console.error(`${failedImageCount} of ${frameCount} frames failed to load. Halting animation.`);
+                return;
+            }
+            
+                 // Immediate render for faster first appearance
+                 render();
+                 setupScrollTrigger();
+          }
+        };
+        
+        // Load frames in parallel for faster loading
+        for (let i = 1; i <= frameCount; i++) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = currentFrame(i);
+            img.onload = onImageLoad;
+            img.onerror = (event) => onImageLoad(event as Event);
+            images.push(img);
         }
-        setLoading(false);
-        render(); // Render the first frame
-        setupScrollTrigger();
       }
     };
-    
-    // Start from 1 to match file names like "01.png"
-    for (let i = 1; i <= frameCount; i++) {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = currentFrame(i);
-        img.onload = onImageLoad;
-        img.onerror = onImageLoad; // Trigger onImageLoad even on error
-        images.push(img);
+
+    // Check for preloaded frames, with fallback
+    if ((window as any).framesReady) {
+      checkForPreloadedFrames();
+    } else {
+      // Wait for frames to be ready, then check again
+      const checkInterval = setInterval(() => {
+        if ((window as any).framesReady) {
+          clearInterval(checkInterval);
+          checkForPreloadedFrames();
+        }
+      }, 10); // Check very frequently for faster response
+      
+      // Timeout after 2 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        checkForPreloadedFrames();
+      }, 2000);
     }
     
     const imageSeq = { frame: 0 }; 
 
     function setupScrollTrigger() {
+      // Pre-warm the scroll trigger for smoother first scroll
+      ScrollTrigger.refresh();
+      
       gsap.to(imageSeq, {
         frame: frameCount - 1,
         snap: "frame",
@@ -72,10 +126,14 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         scrollTrigger: {
             trigger: heroRef.current,
             start: "top top",
-            end: "+=3000", // scroll length
-            scrub: 1.5,
+            end: "+=2000", // increased scroll length for 100 frames
+            scrub: 0.2, // cinematic scrub for smooth frame progression
             pin: true,
             anticipatePin: 1,
+            onRefresh: () => {
+              // Ensure smooth first scroll by pre-rendering
+              render();
+            }
         },
         onUpdate: render,
       });
@@ -99,19 +157,27 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
 
     function render() {
       const img = images[Math.floor(imageSeq.frame)];
-      if (img && context) {
-         // Scale image to fit canvas while maintaining aspect ratio
-        canvas.width = 1920;
-        canvas.height = 1080;
+      if (img && context && canvas && img.complete && img.naturalHeight > 0) {
+        // Only resize canvas once, not on every render
+        if (canvas.width !== 1920 || canvas.height !== 1080) {
+          canvas.width = 1920;
+          canvas.height = 1080;
+        }
+        
+        // Pre-calculate ratios for better performance
         const hRatio = canvas.width / img.width;
         const vRatio = canvas.height / img.height;
         const ratio = Math.max(hRatio, vRatio);
-        if (img.complete && img.naturalHeight > 0) {
-            const centerShift_x = (canvas.width - img.width * ratio) / 2;
-            const centerShift_y = (canvas.height - img.height * ratio) / 2;
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
-        }
+        
+        // Calculate positions once
+        const scaledWidth = img.width * ratio;
+        const scaledHeight = img.height * ratio;
+        const centerShift_x = (canvas.width - scaledWidth) / 2;
+        const centerShift_y = (canvas.height - scaledHeight) / 2;
+        
+        // Clear and draw in one operation
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, scaledWidth, scaledHeight);
       }
     }
 
@@ -130,14 +196,6 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
 
   return (
     <section ref={heroRef} id="home" className="relative h-screen w-full overflow-hidden">
-      {loading && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background">
-          <div className="w-1/3 text-center">
-            <p className="font-headline text-lg mb-2">Loading Cinematic Experience...</p>
-            <Progress value={progress} />
-          </div>
-        </div>
-      )}
       <div className="absolute inset-0 z-10 w-full h-full">
         <canvas
           ref={canvasRef}
