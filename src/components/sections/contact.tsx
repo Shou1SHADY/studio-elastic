@@ -52,15 +52,23 @@ export function Contact({ dictionary, lang, showMap = false }: { dictionary: Dic
   }, [state, toast]);
   
   return (
-    <section id="contact" className="container mx-auto px-4 pt-28 md:pt-36 pb-16">
-      <div className="mx-auto max-w-5xl">
-        <div className="text-center">
-          <h2 className="font-headline text-4xl md:text-5xl font-bold">{dictionary.contact.title}</h2>
-          <p className="mt-4 text-lg text-muted-foreground">{dictionary.contact.subtitle}</p>
+    <section id="contact" className="relative min-h-screen bg-gradient-to-br from-background via-background/98 to-accent/5">
+      {/* Unified square grid background pattern (same as Craft/Gallery) */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+
+      <div className="relative container mx-auto px-4 pt-28 md:pt-36 pb-16">
+        <div className="mx-auto max-w-5xl">
+        <div className="text-center mb-4">
+          <h2 className="font-headline text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-accent to-foreground bg-clip-text text-transparent">
+            {dictionary.contact.title}
+          </h2>
+          <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            {dictionary.contact.subtitle}
+          </p>
         </div>
 
         <div className="mt-12 grid gap-8 md:grid-cols-2">
-          <Card className="bg-background/60 border-border/10">
+          <Card className="bg-background/80 border-border/20 shadow-lg">
             <CardHeader>
               <CardTitle className="font-headline">{dictionary.contact.title}</CardTitle>
             </CardHeader>
@@ -115,7 +123,7 @@ export function Contact({ dictionary, lang, showMap = false }: { dictionary: Dic
           </Card>
 
           {showMap && (
-            <Card className="bg-background/60 border-border/10 md:col-span-2">
+            <Card className="bg-background/80 border-border/20 shadow-lg md:col-span-2">
               <CardHeader>
                 <CardTitle className="font-headline">Map</CardTitle>
               </CardHeader>
@@ -133,6 +141,7 @@ export function Contact({ dictionary, lang, showMap = false }: { dictionary: Dic
               </CardContent>
             </Card>
           )}
+        </div>
         </div>
       </div>
     </section>

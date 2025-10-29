@@ -26,13 +26,19 @@ export default function CraftContent({ dictionary, langParam }: { dictionary: an
   };
 
   return (
-    <div className="container mx-auto px-4 pt-32 pb-16">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="craft-title text-4xl font-headline font-bold mb-8 opacity-0">Our Craft</h1>
+    <div className="relative min-h-screen bg-gradient-to-br from-background via-background/98 to-accent/5">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+      
+      <div className="relative container mx-auto px-4 pt-32 pb-16">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="craft-title text-4xl md:text-5xl font-headline font-bold mb-12 opacity-0 text-center bg-gradient-to-r from-foreground via-accent to-foreground bg-clip-text text-transparent">
+            Our Craft
+          </h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-          <div className="process-section opacity-0">
-            <h2 className="text-2xl font-headline font-bold mb-4">The Process</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+          <div className="process-section opacity-0 bg-foreground/[0.08] backdrop-blur-sm p-8 rounded-2xl border border-border/30 shadow-xl">
+            <h2 className="text-2xl font-headline font-bold mb-6 text-accent">The Process</h2>
             <p className="text-lg mb-6">
               At Elastic Canvas, we take pride in our meticulous crafting process. Each product goes through 
               several stages of design, molding, and finishing to ensure the highest quality.
@@ -62,8 +68,8 @@ export default function CraftContent({ dictionary, langParam }: { dictionary: an
               ))}
             </ol>
           </div>
-          <div className="materials-section bg-background/50 backdrop-blur-sm p-6 rounded-lg border border-border/10 h-fit opacity-0">
-            <h2 className="text-2xl font-headline font-bold mb-4">Materials We Use</h2>
+          <div className="materials-section bg-foreground/[0.08] backdrop-blur-sm p-8 rounded-2xl border border-border/30 h-fit opacity-0 shadow-xl">
+            <h2 className="text-2xl font-headline font-bold mb-6 text-accent">Materials We Use</h2>
             <div className="space-y-6">
               {[
                 { title: "Premium Rubber", desc: "Durable and flexible, our rubber products maintain their shape and color for years." },
@@ -82,8 +88,8 @@ export default function CraftContent({ dictionary, langParam }: { dictionary: an
           </div>
         </div>
         
-        <div className="custom-order-section bg-background/50 backdrop-blur-sm p-8 rounded-lg border border-border/10 opacity-0">
-          <h2 className="text-2xl font-headline font-bold mb-6 text-center">Custom Order Process</h2>
+        <div className="custom-order-section bg-foreground/[0.08] backdrop-blur-sm p-10 rounded-2xl border border-border/30 opacity-0 shadow-2xl">
+          <h2 className="text-2xl font-headline font-bold mb-8 text-center text-accent">Custom Order Process</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { title: "Consultation", desc: "Share your ideas and requirements with our design team." },
@@ -102,6 +108,7 @@ export default function CraftContent({ dictionary, langParam }: { dictionary: an
               </div>
             ))}
           </div>
+        </div>
         </div>
       </div>
     </div>

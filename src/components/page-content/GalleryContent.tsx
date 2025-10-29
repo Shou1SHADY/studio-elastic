@@ -62,11 +62,17 @@ export default function GalleryContent({ dictionary, langParam }: { dictionary: 
   };
 
   return (
-    <div className="container mx-auto px-4 pt-32 pb-16">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="gallery-title text-4xl font-headline font-bold mb-8">Our Gallery</h1>
+    <div className="relative min-h-screen bg-gradient-to-br from-background via-background/98 to-accent/5">
+      {/* Unified square grid background pattern (same as Craft) */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+
+      <div className="relative container mx-auto px-4 pt-32 pb-16">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="gallery-title text-4xl md:text-5xl font-headline font-bold mb-12 text-center bg-gradient-to-r from-foreground via-accent to-foreground bg-clip-text text-transparent">
+            Our Gallery
+          </h1>
         
-        <div className="filter-buttons flex flex-wrap gap-4 mb-8 justify-center">
+        <div className="filter-buttons flex flex-wrap gap-4 mb-12 justify-center bg-background/80 backdrop-blur-sm p-4 rounded-2xl border border-border/20 w-fit mx-auto shadow-lg">
           {['all', 'keychains', 'patches', 'custom'].map((filter) => (
             <button 
               key={filter}
@@ -100,7 +106,7 @@ export default function GalleryContent({ dictionary, langParam }: { dictionary: 
                     onMouseEnter={() => handleItemHover(item.id)}
                     onMouseLeave={handleItemLeave}
                   >
-                    <div className={`relative aspect-square overflow-hidden rounded-lg bg-background/50 backdrop-blur-sm border border-border/10 transition-all duration-300 ${hoveredItem === item.id ? 'shadow-lg scale-[1.02]' : ''}`}>
+                    <div className={`relative aspect-square overflow-hidden rounded-lg bg-background/80 backdrop-blur-sm border border-border/20 transition-all duration-300 ${hoveredItem === item.id ? 'shadow-lg scale-[1.02]' : ''}`}>
                       <Image
                         src={item.imageUrl}
                         alt={item.title}
@@ -131,6 +137,7 @@ export default function GalleryContent({ dictionary, langParam }: { dictionary: 
             </>
           );
         })()}
+        </div>
       </div>
     </div>
   );
