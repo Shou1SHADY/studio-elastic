@@ -2,10 +2,6 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { Hero } from "@/app/show-case/hero";
-import { About } from "@/components/sections/about";
-import { Craft } from "@/components/sections/craft";
-import { Gallery } from "@/components/sections/gallery";
-import { Contact } from "@/components/sections/contact";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import Loading from "@/app/show-case/loading";
@@ -18,6 +14,10 @@ type Props = {
 export default function HomeClient({ lang }: Props) {
   const [isReady, setIsReady] = useState(false);
   const [dictionary, setDictionary] = useState<Dictionary | null>(null);
+  const [frameCount, setFrameCount] = useState(100); // Default fallback
+  
+  // Calculate spacer height dynamically based on loaded frame count
+  const scrollHeightVh = (frameCount * 40) / (typeof window !== 'undefined' ? window.innerHeight / 100 : 10);
 
   useEffect(() => {
     const loadDictionaryAndFrames = async () => {
@@ -32,6 +32,9 @@ export default function HomeClient({ lang }: Props) {
         const checkFrames = setInterval(() => {
           if ((window as any).framesReady && (window as any).preloadedFrames?.length > 0) {
             clearInterval(checkFrames);
+            // Set actual frame count from preloaded frames
+            const loadedFrameCount = (window as any).preloadedFrames?.length || 100;
+            setFrameCount(loadedFrameCount);
             setTimeout(() => setIsReady(true), 300);
           }
         }, 100);
@@ -55,12 +58,9 @@ export default function HomeClient({ lang }: Props) {
       <Suspense fallback={<div className="h-screen w-full bg-background" />}>
         <Hero dictionary={dictionary} />
       </Suspense>
-      <div className="space-y-32 md:space-y-48 pb-32 md:pb-48">
-        <About dictionary={dictionary} />
-        <Craft dictionary={dictionary} />
-        <Gallery dictionary={dictionary} />
-        <Contact dictionary={dictionary} lang={lang} />
-      </div>
+      
+      {/* Spacer to ensure enough scroll height for frame animation */}
+      <div style={{ height: `${scrollHeightVh}vh` }} className="pointer-events-none" />
 
       <Footer dictionary={dictionary} lang={lang} />
     </main>
