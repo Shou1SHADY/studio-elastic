@@ -1,13 +1,5 @@
 
-import { getDictionary } from '@/lib/dictionaries';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
-import { Hero } from '@/app/show-case/hero';
-import { About } from '@/components/sections/about';
-import { Craft } from '@/components/sections/craft';
-import { Gallery } from '@/components/sections/gallery';
-import { Contact } from '@/components/sections/contact';
-import { Suspense } from 'react';
+import HomeClient from '@/app/show-case/home-client';
 
 type Props = {
   params: {
@@ -15,24 +7,8 @@ type Props = {
   };
 };
 
-export default async function Home({ params: { lang } }: Props) {
-  const dictionary = await getDictionary(lang);
-
-  return (
-    <>
-      <Header dictionary={dictionary} lang={lang} />
-      <main>
-        <Suspense fallback={<div className="h-screen w-full bg-background" />}>
-          <Hero dictionary={dictionary} />
-        </Suspense>
-        <div className="space-y-32 md:space-y-48">
-          <About dictionary={dictionary} />
-          <Craft dictionary={dictionary} />
-          <Gallery dictionary={dictionary} />
-          <Contact dictionary={dictionary} lang={lang} />
-        </div>
-      </main>
-      <Footer dictionary={dictionary} />
-    </>
-  );
+export default async function Home({ params }: { params: { lang: string } }) {
+  const paramsData = await params;
+  const lang = paramsData.lang as 'en' | 'ar';        
+  return <HomeClient lang={lang} />
 }

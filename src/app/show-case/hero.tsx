@@ -15,6 +15,39 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
   const heroRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const imageSeq = useRef({ frame: 0 });
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+
+  // Define render function outside useEffect for better organization
+  const render = () => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    const img = imagesRef.current[Math.floor(imageSeq.current.frame)];
+    if (img && img.complete && img.naturalHeight > 0) {
+      // Only resize canvas once, not on every render
+      if (canvas.width !== 1920 || canvas.height !== 1080) {
+        canvas.width = 1920;
+        canvas.height = 1080;
+      }
+      
+      // Pre-calculate ratios for better performance
+      const hRatio = canvas.width / img.width;
+      const vRatio = canvas.height / img.height;
+      const ratio = Math.max(hRatio, vRatio);
+      
+      // Calculate positions once
+      const scaledWidth = img.width * ratio;
+      const scaledHeight = img.height * ratio;
+      const centerShift_x = (canvas.width - scaledWidth) / 2;
+      const centerShift_y = (canvas.height - scaledHeight) / 2;
+      
+      // Clear and draw in one operation
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, scaledWidth, scaledHeight);
+    }
+  };
 
   useEffect(() => {
     const frameCount = 100; // Updated to handle 100 frames
@@ -31,31 +64,28 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
       context.drawImage(firstFrame, 0, 0, canvas.width, canvas.height);
     }
 
-    // Wait for preloaded frames from the loading page
-    let images: HTMLImageElement[] = [];
-    
     const checkForPreloadedFrames = () => {
       const preloadedFrames = (window as any).preloadedFrames;
       const framesReady = (window as any).framesReady;
       
       if (preloadedFrames && framesReady && preloadedFrames.length >= frameCount) {
         // Use preloaded frames
-        images = preloadedFrames;
+        imagesRef.current = preloadedFrames;
         
              // Immediate render for faster first appearance
              render(); // Render the first frame immediately
              
              // Pre-render next few frames for smoother scrolling
              for (let i = 1; i <= Math.min(3, frameCount - 1); i++) {
-               const img = images[i];
+               const img = imagesRef.current[i];
                if (img && img.complete) {
-                 const tempFrame = imageSeq.frame;
-                 imageSeq.frame = i;
+                 const tempFrame = imageSeq.current.frame;
+                 imageSeq.current.frame = i;
                  render();
-                 imageSeq.frame = tempFrame;
+                 imageSeq.current.frame = tempFrame;
                }
              }
-             imageSeq.frame = 0; // Reset to first frame
+             imageSeq.current.frame = 0; // Reset to first frame
              render(); // Final render of first frame
 
              setupScrollTrigger();
@@ -64,7 +94,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
         const currentFrame = (index: number) =>
           `/frames/${String(index).padStart(3, "0")}.png`;
         
-        images = [];
+        imagesRef.current = [];
         let loadedImageCount = 0;
         let failedImageCount = 0;
 
@@ -97,7 +127,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
             img.src = currentFrame(i);
             img.onload = onImageLoad;
             img.onerror = (event) => onImageLoad(event as Event);
-            images.push(img);
+            imagesRef.current.push(img);
         }
       }
     };
@@ -121,21 +151,19 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
       }, 2000);
     }
     
-    const imageSeq = { frame: 0 }; 
-
     function setupScrollTrigger() {
       // Pre-warm the scroll trigger for smoother first scroll
       ScrollTrigger.refresh();
       
-      gsap.to(imageSeq, {
+      gsap.to(imageSeq.current, {
         frame: frameCount - 1,
         snap: "frame",
         ease: "none",
         scrollTrigger: {
             trigger: heroRef.current,
             start: "top top",
-            end: "+=2000", // increased scroll length for 100 frames
-            scrub: 0.2, // cinematic scrub for smooth frame progression
+            end: "+=4000", // doubled scroll length for slower animation
+            scrub: 0.5, // increased scrub value for smoother, slower transitions
             pin: true,
             anticipatePin: 1,
             onRefresh: () => {
@@ -164,7 +192,7 @@ export function Hero({ dictionary }: { dictionary: Dictionary }) {
     }
 
     function render() {
-      const img = images[Math.floor(imageSeq.frame)];
+      const img = imagesRef.current[Math.floor(imageSeq.current.frame)];
       if (img && context && canvas && img.complete && img.naturalHeight > 0) {
         // Only resize canvas once, not on every render
         if (canvas.width !== 1920 || canvas.height !== 1080) {
